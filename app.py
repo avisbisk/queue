@@ -90,6 +90,13 @@ def getNext(operator_id: int, db: Session):
     else:
         newID = operator_id + 1
         return newID
+def checkQueue(operator_id: int, db: Session):
+    newID = getNext(operator_id, db)
+    newOperator = db.query(models.Operator).filter(models.Operator.id == newID).first()
+    if (not newOperator.in_queue):
+        checkQueue(newID, db)
+    else:
+        return newID
 
 if __name__ == '__main__':
     uvicorn.run(app, port=8000, host="127.0.0.1")
