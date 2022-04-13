@@ -37,8 +37,9 @@ def update(request: Request, operator_id: int, db: Session = Depends(get_db)):
     operator = db.query(models.Operator).filter(models.Operator.id == operator_id).first()
     operator.in_queue = not operator.in_queue
 
-    newID = getNext(operator_id, db)
+    newID = checkQueue(operator_id, db)
     newOperator = db.query(models.Operator).filter(models.Operator.id == newID).first()
+
     if (operator.next):
         newOperator.next = True
     if (not operator.in_queue):
@@ -73,7 +74,9 @@ def assigned(request: Request, operator_id: int, db: Session = Depends(get_db)):
     db.add(new_ticket)
     operator.numTickets = operator.numTickets + 1
     operator.next = False
-    newID = getNext(operator_id, db)
+    newID = checkQueue(operator_id, db)
+    if(newID is None):
+        newID = 1
     newOperator = db.query(models.Operator).filter(models.Operator.id == newID).first()
     newOperator.next = True
     db.commit()
@@ -93,8 +96,8 @@ def getNext(operator_id: int, db: Session):
 def checkQueue(operator_id: int, db: Session):
     newID = getNext(operator_id, db)
     newOperator = db.query(models.Operator).filter(models.Operator.id == newID).first()
-    if (not newOperator.in_queue):
-        checkQueue(newID, db)
+    if (newOperator.in_queue == False):
+        return checkQueue(newID, db)
     else:
         return newID
 
